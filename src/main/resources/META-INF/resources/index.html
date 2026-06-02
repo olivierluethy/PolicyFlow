@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolicyFlow — Swiss Insurance Broker Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] } } }
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 6px; }
+        ::-webkit-scrollbar-thumb:hover { background: #374151; }
+        [x-cloak] { display: none; }
+    </style>
+</head>
+<body class="bg-gray-950 text-white antialiased">
+
+<!-- ===================== LOGIN SCREEN ===================== -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center gap-1 text-4xl font-extrabold tracking-tight">
+                <span class="text-white">Policy</span><span class="text-red-600">Flow</span>
+            </div>
+            <p class="text-gray-500 text-sm mt-2">Swiss Insurance Broker Platform</p>
+        </div>
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
+            <h1 class="text-lg font-semibold mb-1">Sign in</h1>
+            <p class="text-gray-500 text-sm mb-6">Enter your credentials to continue.</p>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1.5">Username</label>
+                    <input id="loginUsername" type="text" autocomplete="username" value="admin"
+                           class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1.5">Password</label>
+                    <input id="loginPassword" type="password" autocomplete="current-password" value="admin123"
+                           class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition">
+                </div>
+                <div id="loginError" class="hidden text-sm text-red-400 bg-red-900/30 border border-red-900 rounded-lg px-3 py-2"></div>
+                <button type="submit" id="loginBtn"
+                        class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-4 py-2.5 text-sm transition flex items-center justify-center gap-2">
+                    <span>Sign in</span>
+                </button>
+            </form>
+            <p class="text-center text-xs text-gray-600 mt-6">Demo: <span class="text-gray-400">admin / admin123</span> · <span class="text-gray-400">advisor / advisor123</span></p>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== APP SHELL ===================== -->
+<div id="app" class="hidden min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-900 border-r border-gray-800 flex flex-col fixed inset-y-0 left-0 z-30">
+        <div class="h-16 flex items-center px-6 border-b border-gray-800">
+            <div class="text-xl font-extrabold tracking-tight">
+                <span class="text-white">Policy</span><span class="text-red-600">Flow</span>
+            </div>
+        </div>
+        <nav id="sidebarNav" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto"></nav>
+        <div class="px-3 py-4 border-t border-gray-800">
+            <div class="flex items-center gap-3 px-3 py-2">
+                <div class="w-9 h-9 rounded-full bg-red-600/20 text-red-500 flex items-center justify-center font-semibold" id="userInitials">A</div>
+                <div class="min-w-0">
+                    <div class="text-sm font-medium truncate" id="userName">Admin</div>
+                    <div class="text-xs text-gray-500 truncate" id="userRole">ADMIN</div>
+                </div>
+            </div>
+            <button id="logoutBtn" class="mt-2 w-full flex items-center gap-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg px-3 py-2 transition">
+                <i class="ti ti-logout"></i> Sign out
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="flex-1 ml-64 flex flex-col min-h-screen">
+        <header class="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-8 sticky top-0 z-20">
+            <div>
+                <h1 id="pageTitle" class="text-lg font-semibold">Dashboard</h1>
+                <p id="pageSubtitle" class="text-xs text-gray-500"></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/swagger" target="_blank" class="text-sm text-gray-400 hover:text-white flex items-center gap-1.5 transition">
+                    <i class="ti ti-api"></i> API
+                </a>
+            </div>
+        </header>
+        <main id="viewContainer" class="flex-1 bg-gray-950 overflow-y-auto p-8"></main>
+    </div>
+</div>
+
+<!-- Modal root -->
+<div id="modalRoot" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div id="modalBackdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div id="modalCard" class="relative bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"></div>
+</div>
+
+<!-- Toast root -->
+<div id="toastRoot" class="fixed bottom-6 right-6 z-[60] space-y-3"></div>
+
+<script>
+/* =========================================================================
+ * PolicyFlow — single-page application (vanilla JS, no build step)
+ * ========================================================================= */
+
+const CANTONS = ['ZH','BE','LU','UR','SZ','OW','NW','GL','ZG','FR','SO','BS','BL','SH','AR','AI','SG','GR','AG','TG','TI','VD','VS','NE','GE','JU'];
+const FRANCHISES = [300, 500, 1000, 1500, 2000, 2500];
+
+const app = {
+    token: null,
+    user: null,
+    currentView: 'dashboard',
+    providers: [],
+    customers: [],
+};
+
+const NAV = [
+    { key: 'dashboard',  label: 'Dashboard',          icon: 'ti-layout-dashboard' },
+    { key: 'customers',  label: 'Customers',          icon: 'ti-users' },
+    { key: 'offers',     label: 'Offers',             icon: 'ti-file-text' },
+    { key: 'policies',   label: 'Policies',           icon: 'ti-shield-check' },
+    { key: 'appointments', label: 'Appointments',     icon: 'ti-calendar' },
+    { key: 'calculator', label: 'Premium Calculator', icon: 'ti-calculator' },
+    { key: 'audit',      label: 'Audit Log',          icon: 'ti-list-details' },
+];
+
+/* ---------------------------- API client ---------------------------- */
+const api = {
+    async request(method, path, body) {
+        const opts = { method, headers: { 'Content-Type': 'application/json' } };
+        if (app.token) opts.headers['Authorization'] = 'Bearer ' + app.token;
+        if (body !== undefined) opts.body = JSON.stringify(body);
+        const res = await fetch(path, opts);
+        if (res.status === 401 && app.token) { logout(); throw new Error('Session expired'); }
+        if (res.status === 204) return null;
+        const ct = res.headers.get('content-type') || '';
+        const data = ct.includes('application/json') ? await res.json() : await res.text();
+        if (!res.ok) {
+            const msg = (data && data.error) ? data.error : ('Request failed (' + res.status + ')');
+            const violations = (data && data.violations && data.violations.length) ? ': ' + data.violations.join(', ') : '';
+            throw new Error(msg + violations);
+        }
+        return data;
+    },
+    get: (p) => api.request('GET', p),
+    post: (p, b) => api.request('POST', p, b),
+    put: (p, b) => api.request('PUT', p, b),
+    delete: (p) => api.request('DELETE', p),
+};
+
+/* ---------------------------- Helpers ---------------------------- */
+const $ = (sel, root = document) => root.querySelector(sel);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const chf = (n) => 'CHF ' + Number(n ?? 0).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('de-CH') : '—';
+const fmtDateTime = (d) => d ? new Date(d).toLocaleString('de-CH', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+const initials = (name) => (name || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+
+function toast(message, type = 'success') {
+    const colors = type === 'error'
+        ? 'bg-red-900/90 border-red-700 text-red-100'
+        : 'bg-green-900/90 border-green-700 text-green-100';
+    const icon = type === 'error' ? 'ti-alert-triangle' : 'ti-check';
+    const el = document.createElement('div');
+    el.className = `flex items-center gap-3 ${colors} border rounded-xl px-4 py-3 shadow-2xl text-sm min-w-[260px] animate-[fadeIn_0.2s_ease]`;
+    el.innerHTML = `<i class="ti ${icon} text-lg"></i><span>${esc(message)}</span>`;
+    $('#toastRoot').appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); },
+        type === 'error' ? 4000 : 3000);
+}
+
+function statusBadge(status) {
+    const map = {
+        PENDING:   'bg-yellow-900/30 text-yellow-400',
+        ACCEPTED:  'bg-green-900/30 text-green-400',
+        ACTIVE:    'bg-green-900/30 text-green-400',
+        SCHEDULED: 'bg-blue-900/30 text-blue-400',
+        COMPLETED: 'bg-gray-700/40 text-gray-300',
+        REJECTED:  'bg-red-900/30 text-red-400',
+        CANCELLED: 'bg-red-900/30 text-red-400',
+        EXPIRED:   'bg-gray-700/40 text-gray-400',
+        SUSPENDED: 'bg-orange-900/30 text-orange-400',
+        NO_SHOW:   'bg-red-900/30 text-red-400',
+    };
+    const cls = map[status] || 'bg-gray-700/40 text-gray-300';
+    return `<span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${cls}">${esc(status)}</span>`;
+}
+
+function actionColor(action) {
+    if (['CREATE','ACCEPT'].includes(action)) return 'text-green-400';
+    if (['DELETE','REJECT','CANCEL'].includes(action)) return 'text-red-400';
+    if (['UPDATE'].includes(action)) return 'text-blue-400';
+    if (['LOGIN','EXPIRE'].includes(action)) return 'text-gray-400';
+    return 'text-gray-300';
+}
+
+function spinner() {
+    return `<div class="flex items-center justify-center py-20">
+        <div class="w-10 h-10 border-4 border-gray-800 border-t-red-600 rounded-full animate-spin"></div></div>`;
+}
+
+function emptyState(icon, text) {
+    return `<div class="flex flex-col items-center justify-center py-16 text-gray-600">
+        <i class="ti ${icon} text-5xl mb-3"></i><p class="text-sm">${esc(text)}</p></div>`;
+}
+
+/* ---------------------------- Modal ---------------------------- */
+function openModal(html) {
+    $('#modalCard').innerHTML = html;
+    $('#modalRoot').classList.remove('hidden');
+}
+function closeModal() {
+    $('#modalRoot').classList.add('hidden');
+    $('#modalCard').innerHTML = '';
+}
+$('#modalBackdrop').addEventListener('click', closeModal);
+
+function inputField(label, id, opts = {}) {
+    const { type = 'text', value = '', required = false, placeholder = '' } = opts;
+    return `<div>
+        <label class="block text-xs font-medium text-gray-400 mb-1.5">${esc(label)}${required ? ' <span class="text-red-500">*</span>' : ''}</label>
+        <input id="${id}" type="${type}" value="${esc(value)}" placeholder="${esc(placeholder)}"
+            class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition">
+    </div>`;
+}
+function selectField(label, id, options, opts = {}) {
+    const { value = '', required = false } = opts;
+    const opt = options.map(o => {
+        const v = typeof o === 'object' ? o.value : o;
+        const l = typeof o === 'object' ? o.label : o;
+        return `<option value="${esc(v)}" ${String(v) === String(value) ? 'selected' : ''}>${esc(l)}</option>`;
+    }).join('');
+    return `<div>
+        <label class="block text-xs font-medium text-gray-400 mb-1.5">${esc(label)}${required ? ' <span class="text-red-500">*</span>' : ''}</label>
+        <select id="${id}" class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition">${opt}</select>
+    </div>`;
+}
+
+/* ---------------------------- Auth ---------------------------- */
+$('#loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('#loginBtn');
+    const err = $('#loginError');
+    err.classList.add('hidden');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>';
+    try {
+        const data = await api.post('/api/auth/login', {
+            username: $('#loginUsername').value.trim(),
+            password: $('#loginPassword').value,
+        });
+        app.token = data.token;
+        app.user = data;
+        onLoggedIn();
+    } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Sign in</span>';
+    }
+});
+
+function onLoggedIn() {
+    $('#loginScreen').classList.add('hidden');
+    $('#app').classList.remove('hidden');
+    $('#userName').textContent = app.user.fullName || app.user.username;
+    $('#userRole').textContent = app.user.role;
+    $('#userInitials').textContent = initials(app.user.fullName || app.user.username);
+    renderSidebar();
+    navigate('dashboard');
+}
+
+function logout() {
+    app.token = null;
+    app.user = null;
+    $('#app').classList.add('hidden');
+    $('#loginScreen').classList.remove('hidden');
+}
+$('#logoutBtn').addEventListener('click', logout);
+
+/* ---------------------------- Navigation ---------------------------- */
+function renderSidebar() {
+    $('#sidebarNav').innerHTML = NAV.map(item => `
+        <button data-view="${item.key}" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-gray-400 hover:text-white hover:bg-gray-800">
+            <i class="ti ${item.icon} text-lg"></i> ${item.label}
+        </button>`).join('');
+    $('#sidebarNav').querySelectorAll('.nav-item').forEach(btn =>
+        btn.addEventListener('click', () => navigate(btn.dataset.view)));
+}
+
+function navigate(view) {
+    app.currentView = view;
+    const meta = NAV.find(n => n.key === view);
+    $('#pageTitle').textContent = meta.label;
+    $('#sidebarNav').querySelectorAll('.nav-item').forEach(btn => {
+        const active = btn.dataset.view === view;
+        btn.classList.toggle('bg-red-600', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('text-gray-400', !active);
+    });
+    views[view]();
+}
+
+/* ---------------------------- Views ---------------------------- */
+const views = {};
+const container = () => $('#viewContainer');
+
+/* ===== Dashboard ===== */
+views.dashboard = async () => {
+    container().innerHTML = spinner();
+    $('#pageSubtitle').textContent = 'Portfolio overview';
+    try {
+        const s = await api.get('/api/dashboard/stats');
+        const card = (label, value, icon, accent) => `
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">${label}</p>
+                        <p class="text-3xl font-bold mt-2">${value}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl ${accent} flex items-center justify-center text-2xl"><i class="ti ${icon}"></i></div>
+                </div>
+            </div>`;
+        container().innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+                ${card('Customers', s.totalCustomers, 'ti-users', 'bg-red-600/20 text-red-500')}
+                ${card('Pending Offers', s.activeOffers, 'ti-file-text', 'bg-yellow-600/20 text-yellow-500')}
+                ${card('Active Policies', s.activePolicies, 'ti-shield-check', 'bg-green-600/20 text-green-500')}
+                ${card('Monthly Volume', chf(s.premiumVolumeMonthly), 'ti-coin', 'bg-blue-600/20 text-blue-500')}
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-gray-900 border border-gray-800 rounded-xl p-6">
+                    <h2 class="font-semibold mb-4 flex items-center gap-2"><i class="ti ti-activity text-red-500"></i> Recent Activity</h2>
+                    ${s.recentActivity.length ? `<div class="space-y-3">${s.recentActivity.map(a => `
+                        <div class="flex items-start gap-3 text-sm">
+                            <span class="mt-0.5 font-mono text-xs ${actionColor(a.action)} w-16 shrink-0">${esc(a.action)}</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-gray-200 truncate">${esc(a.description)}</p>
+                                <p class="text-gray-600 text-xs">${fmtDateTime(a.performedAt)} · ${esc(a.performedBy || 'system')}</p>
+                            </div>
+                        </div>`).join('')}</div>` : emptyState('ti-inbox', 'No activity yet')}
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                    <h2 class="font-semibold mb-4 flex items-center gap-2"><i class="ti ti-calendar text-red-500"></i> Upcoming</h2>
+                    ${s.upcomingAppointments.length ? `<div class="space-y-3">${s.upcomingAppointments.map(a => `
+                        <div class="border-l-2 border-red-600 pl-3">
+                            <p class="text-sm font-medium truncate">${esc(a.title)}</p>
+                            <p class="text-xs text-gray-500">${esc(a.customerName)}</p>
+                            <p class="text-xs text-gray-600">${fmtDateTime(a.appointmentDate)}</p>
+                        </div>`).join('')}</div>` : emptyState('ti-calendar-off', 'Nothing scheduled')}
+                </div>
+            </div>`;
+    } catch (ex) { container().innerHTML = emptyState('ti-alert-triangle', ex.message); }
+};
+
+/* ===== Customers ===== */
+views.customers = async () => {
+    $('#pageSubtitle').textContent = 'Manage your clients';
+    container().innerHTML = `
+        <div class="flex items-center justify-between mb-5 gap-4">
+            <div class="relative flex-1 max-w-md">
+                <i class="ti ti-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                <input id="custSearch" placeholder="Search by name or email…"
+                    class="w-full bg-gray-900 border border-gray-800 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:border-red-600 transition">
+            </div>
+            <button id="addCustBtn" class="bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg px-4 py-2.5 text-sm flex items-center gap-2 transition">
+                <i class="ti ti-plus"></i> Add Customer</button>
+        </div>
+        <div id="custTable" class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">${spinner()}</div>`;
+    $('#addCustBtn').addEventListener('click', () => customerForm());
+    let timer;
+    $('#custSearch').addEventListener('input', (e) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => loadCustomers(e.target.value.trim()), 250);
+    });
+    loadCustomers('');
+};
+
+async function loadCustomers(search) {
+    const el = $('#custTable');
+    try {
+        const list = await api.get('/api/customers' + (search ? '?search=' + encodeURIComponent(search) : ''));
+        app.customers = list;
+        if (!list.length) { el.innerHTML = emptyState('ti-user-off', 'No customers found'); return; }
+        el.innerHTML = `<table class="w-full text-sm">
+            <thead><tr class="text-left text-gray-500 border-b border-gray-800 text-xs uppercase">
+                <th class="px-5 py-3">Name</th><th class="px-5 py-3">Email</th><th class="px-5 py-3">Canton</th>
+                <th class="px-5 py-3">Date of Birth</th><th class="px-5 py-3 text-right">Actions</th></tr></thead>
+            <tbody>${list.map(c => `
+                <tr class="border-b border-gray-800/60 hover:bg-gray-800/40 transition">
+                    <td class="px-5 py-3"><div class="font-medium">${esc(c.firstName)} ${esc(c.lastName)}</div>
+                        <div class="text-xs text-gray-500">${esc(c.city || '')}</div></td>
+                    <td class="px-5 py-3 text-gray-400">${esc(c.email)}</td>
+                    <td class="px-5 py-3"><span class="font-mono text-xs bg-gray-800 rounded px-2 py-0.5">${esc(c.canton)}</span></td>
+                    <td class="px-5 py-3 text-gray-400">${fmtDate(c.dateOfBirth)} <span class="text-gray-600">(${c.age})</span></td>
+                    <td class="px-5 py-3"><div class="flex items-center justify-end gap-1">
+                        <button title="View" onclick="customerDetail(${c.id})" class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded"><i class="ti ti-eye"></i></button>
+                        <button title="Edit" onclick="customerForm(${c.id})" class="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded"><i class="ti ti-pencil"></i></button>
+                        <button title="Delete" onclick="deleteCustomer(${c.id})" class="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded"><i class="ti ti-trash"></i></button>
+                    </div></td>
+                </tr>`).join('')}</tbody></table>`;
+    } catch (ex) { el.innerHTML = emptyState('ti-alert-triangle', ex.message); }
+}
+
+function customerForm(id) {
+    const c = id ? app.customers.find(x => x.id === id) : {};
+    openModal(`
+        <div class="p-6 border-b border-gray-800 flex items-center justify-between">
+            <h2 class="font-semibold">${id ? 'Edit' : 'New'} Customer</h2>
+            <button onclick="closeModal()" class="text-gray-500 hover:text-white"><i class="ti ti-x"></i></button>
+        </div>
+        <form id="custForm" class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                ${inputField('First name', 'cFirst', { value: c.firstName, required: true })}
+                ${inputField('Last name', 'cLast', { value: c.lastName, required: true })}
+            </div>
+            ${inputField('Email', 'cEmail', { value: c.email, required: true, type: 'email' })}
+            <div class="grid grid-cols-2 gap-4">
+                ${inputField('Phone', 'cPhone', { value: c.phone })}
+                ${inputField('Date of birth', 'cDob', { value: c.dateOfBirth, required: true, type: 'date' })}
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                ${selectField('Canton', 'cCanton', CANTONS, { value: c.canton, required: true })}
+                ${inputField('ZIP', 'cZip', { value: c.zip })}
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                ${inputField('Address', 'cAddr', { value: c.address })}
+                ${inputField('City', 'cCity', { value: c.city })}
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-gray-400 hover:text-white">Cancel</button>
+                <button type="submit" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium">${id ? 'Save' : 'Create'}</button>
+            </div>
+        </form>`);
+    $('#custForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+            firstName: $('#cFirst').value.trim(), lastName: $('#cLast').value.trim(),
+            email: $('#cEmail').value.trim(), phone: $('#cPhone').value.trim() || null,
+            dateOfBirth: $('#cDob').value, canton: $('#cCanton').value,
+            address: $('#cAddr').value.trim() || null, city: $('#cCity').value.trim() || null,
+            zip: $('#cZip').value.trim() || null,
+        };
+        try {
+            if (id) await api.put('/api/customers/' + id, body);
+            else await api.post('/api/customers', body);
+            closeModal(); toast('Customer ' + (id ? 'updated' : 'created')); loadCustomers('');
+        } catch (ex) { toast(ex.message, 'error'); }
+    });
+}
+
+async function deleteCustomer(id) {
+    confirmDialog('Delete customer', 'This will deactivate the customer. Customers with active policies cannot be deleted.', async () => {
+        try { await api.delete('/api/customers/' + id); toast('Customer deleted'); loadCustomers(''); }
+        catch (ex) { toast(ex.message, 'error'); }
+    });
+}
+
+async function customerDetail(id) {
+    openModal(spinner());
+    try {
+        const [c, offers, policies, appts] = await Promise.all([
+            api.get('/api/customers/' + id),
+            api.get('/api/offers'),
+            api.get('/api/policies/customer/' + id),
+            api.get('/api/appointments/customer/' + id),
+        ]);
+        const custOffers = offers.filter(o => o.customerId === id);
+        const tab = (label, count) => `<button class="detail-tab px-4 py-2 text-sm border-b-2 border-transparent text-gray-400 hover:text-white" data-tab="${label.toLowerCase()}">${label} <span class="text-xs text-gray-600">${count}</span></button>`;
+        openModal(`
+            <div class="p-6 border-b border-gray-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-full bg-red-600/20 text-red-500 flex items-center justify-center font-semibold">${initials(c.firstName + ' ' + c.lastName)}</div>
+                    <div><h2 class="font-semibold">${esc(c.firstName)} ${esc(c.lastName)}</h2>
+                    <p class="text-xs text-gray-500">${esc(c.email)}</p></div>
+                </div>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-white"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="px-6 border-b border-gray-800 flex gap-1">${tab('Overview','')}${tab('Offers',custOffers.length)}${tab('Policies',policies.length)}${tab('Appointments',appts.length)}</div>
+            <div id="detailBody" class="p-6 text-sm"></div>`);
+        const bodies = {
+            overview: `<dl class="grid grid-cols-2 gap-y-3 gap-x-6">
+                ${detailRow('Phone', c.phone || '—')}${detailRow('Canton', c.canton + ' — ' + c.cantonName)}
+                ${detailRow('Date of birth', fmtDate(c.dateOfBirth) + ' (age ' + c.age + ')')}${detailRow('Address', [c.address, c.zip, c.city].filter(Boolean).join(', ') || '—')}
+                ${detailRow('Created', fmtDateTime(c.createdAt))}</dl>`,
+            offers: miniTable(custOffers, ['providerName','franchise','monthlyPremium','status'], o => [esc(o.providerName), 'CHF ' + o.franchise, chf(o.monthlyPremium), statusBadge(o.status)], 'No offers'),
+            policies: miniTable(policies, ['policyNumber','providerName','monthlyPremium','status'], p => [esc(p.policyNumber), esc(p.providerName), chf(p.monthlyPremium), statusBadge(p.status)], 'No policies'),
+            appointments: miniTable(appts, ['title','appointmentDate','status'], a => [esc(a.title), fmtDateTime(a.appointmentDate), statusBadge(a.status)], 'No appointments'),
+        };
+        const showTab = (t) => {
+            $('#detailBody').innerHTML = bodies[t];
+            $('#modalCard').querySelectorAll('.detail-tab').forEach(b => {
+                const on = b.dataset.tab === t;
+                b.classList.toggle('border-red-600', on); b.classList.toggle('text-white', on);
+            });
+        };
+        $('#modalCard').querySelectorAll('.detail-tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+        showTab('overview');
+    } catch (ex) { toast(ex.message, 'error'); closeModal(); }
+}
+function detailRow(k, v) { return `<div><dt class="text-gray-500 text-xs">${esc(k)}</dt><dd class="text-gray-200">${v}</dd></div>`; }
+function miniTable(rows, cols, mapper, empty) {
+    if (!rows.length) return emptyState('ti-inbox', empty);
+    return `<table class="w-full"><tbody>${rows.map(r => `<tr class="border-b border-gray-800/60">${mapper(r).map(c => `<td class="py-2 pr-3">${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+
+/* ===== Offers ===== */
+views.offers = async () => {
+    $('#pageSubtitle').textContent = 'Quotes and proposals';
+    const filters = ['ALL','PENDING','ACCEPTED','REJECTED','EXPIRED'];
+    container().innerHTML = `
+        <div class="flex items-center justify-between mb-5 gap-4 flex-wrap">
+            <div class="flex gap-1 bg-gray-900 border border-gray-800 rounded-lg p-1">
+                ${filters.map((f,i) => `<button data-filter="${f}" class="offer-filter px-3 py-1.5 rounded-md text-sm transition ${i===0?'bg-red-600 text-white':'text-gray-400 hover:text-white'}">${f.charAt(0)+f.slice(1).toLowerCase()}</button>`).join('')}
+            </div>
+            <button id="addOfferBtn" class="bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg px-4 py-2.5 text-sm flex items-center gap-2 transition">
+                <i class="ti ti-plus"></i> Create Offer</button>
+        </div>
+        <div id="offerTable" class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">${spinner()}</div>`;
+    $('#addOfferBtn').addEventListener('click', offerForm);
+    container().querySelectorAll('.offer-filter').forEach(b => b.addEventListener('click', () => {
+        container().querySelectorAll('.offer-filter').forEach(x => { x.classList.remove('bg-red-600','text-white'); x.classList.add('text-gray-400'); });
+        b.classList.add('bg-red-600','text-white'); b.classList.remove('text-gray-400');
+        loadOffers(b.dataset.filter);
+    }));
+    loadOffers('ALL');
+};
+
+async function loadOffers(filter) {
+    const el = $('#offerTable');
+    try {
+        const list = await api.get('/api/offers' + (filter && filter !== 'ALL' ? '?status=' + filter : ''));
+        if (!list.length) { el.innerHTML = emptyState('ti-file-off', 'No offers found'); return; }
+        el.innerHTML = `<table class="w-full text-sm">
+            <thead><tr class="text-left text-gray-500 border-b border-gray-800 text-xs uppercase">
+                <th class="px-5 py-3">Customer</th><th class="px-5 py-3">Provider</th><th class="px-5 py-3">Franchise</th>
+                <th class="px-5 py-3">Monthly</th><th class="px-5 py-3">Status</th><th class="px-5 py-3">Date</th><th class="px-5 py-3 text-right">Actions</th></tr></thead>
+            <tbody>${list.map(o => `
+                <tr class="border-b border-gray-800/60 hover:bg-gray-800/40 transition">
+                    <td class="px-5 py-3 font-medium">${esc(o.customerName)}</td>
+                    <td class="px-5 py-3 text-gray-400">${esc(o.providerName)}</td>
+                    <td class="px-5 py-3 text-gray-400">CHF ${o.franchise}${o.unfalleinschluss ? ' <span class="text-xs text-red-400">+Unfall</span>' : ''}</td>
+                    <td class="px-5 py-3 font-medium">${chf(o.monthlyPremium)}</td>
+                    <td class="px-5 py-3">${statusBadge(o.status)}</td>
+                    <td class="px-5 py-3 text-gray-500 text-xs">${fmtDate(o.createdAt)}</td>
+                    <td class="px-5 py-3"><div class="flex items-center justify-end gap-1">
+                        ${o.status === 'PENDING' ? `
+                            <button title="Accept" onclick="acceptOffer(${o.id})" class="p-1.5 text-gray-400 hover:text-green-400 hover:bg-gray-700 rounded"><i class="ti ti-check"></i></button>
+                            <button title="Reject" onclick="rejectOffer(${o.id})" class="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded"><i class="ti ti-x"></i></button>` : ''}
+                        <button title="Download PDF" onclick="downloadPdf('offer', ${o.id})" class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded"><i class="ti ti-download"></i></button>
+                    </div></td>
+                </tr>`).join('')}</tbody></table>`;
+    } catch (ex) { el.innerHTML = emptyState('ti-alert-triangle', ex.message); }
+}
+
+async function offerForm() {
+    openModal(spinner());
+    try {
+        const [customers, providers] = await Promise.all([api.get('/api/customers'), api.get('/api/providers')]);
+        app.providers = providers;
+        openModal(`
+            <div class="p-6 border-b border-gray-800 flex items-center justify-between">
+                <h2 class="font-semibold">Create Offer</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-white"><i class="ti ti-x"></i></button>
+            </div>
+            <form id="offerForm" class="p-6 space-y-4">
+                ${selectField('Customer', 'oCustomer', customers.map(c => ({ value: c.id, label: c.firstName + ' ' + c.lastName + ' (' + c.canton + ')' })), { required: true })}
+                ${selectField('Provider', 'oProvider', providers.map(p => ({ value: p.id, label: p.name + ' — base ' + chf(p.basePremium) })), { required: true })}
+                <div class="grid grid-cols-3 gap-4">
+                    ${selectField('Canton', 'oCanton', CANTONS, { required: true })}
+                    ${inputField('Age', 'oAge', { type: 'number', value: '30', required: true })}
+                    ${selectField('Franchise', 'oFranchise', FRANCHISES.map(f => ({ value: f, label: 'CHF ' + f })), { value: 1000, required: true })}
+                </div>
+                <label class="flex items-center gap-2 text-sm text-gray-300">
+                    <input type="checkbox" id="oUnfall" class="rounded bg-gray-800 border-gray-700 text-red-600 focus:ring-red-600"> Include accident cover (Unfalleinschluss, +8%)
+                </label>
+                ${inputField('Notes', 'oNotes', { placeholder: 'Optional' })}
+                <div id="offerPreview" class="hidden bg-gray-800/60 border border-gray-700 rounded-lg p-4"></div>
+                <div class="flex justify-between items-center pt-2">
+                    <button type="button" id="oPreviewBtn" class="text-sm text-red-400 hover:text-red-300 flex items-center gap-1"><i class="ti ti-calculator"></i> Preview premium</button>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-gray-400 hover:text-white">Cancel</button>
+                        <button type="submit" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium">Create</button>
+                    </div>
+                </div>
+            </form>`);
+        $('#oPreviewBtn').addEventListener('click', async () => {
+            try {
+                const r = await api.post('/api/premium/calculate', offerBody());
+                $('#offerPreview').classList.remove('hidden');
+                $('#offerPreview').innerHTML = `<div class="flex items-baseline justify-between">
+                    <span class="text-gray-400 text-sm">Calculated premium</span>
+                    <span class="text-xl font-bold text-red-500">${chf(r.monthlyPremium)}<span class="text-sm text-gray-500">/mo</span></span></div>
+                    <p class="text-xs text-gray-500 mt-1">${chf(r.yearlyPremium)}/year · ${r.ageGroup} · region ${r.regionalFactor} · franchise ${r.franchiseFactor}</p>`;
+            } catch (ex) { toast(ex.message, 'error'); }
+        });
+        $('#offerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try { await api.post('/api/offers', { ...offerBody(), notes: $('#oNotes').value.trim() || null });
+                closeModal(); toast('Offer created'); loadOffers('ALL'); }
+            catch (ex) { toast(ex.message, 'error'); }
+        });
+    } catch (ex) { toast(ex.message, 'error'); closeModal(); }
+}
+function offerBody() {
+    return {
+        customerId: Number($('#oCustomer').value), providerId: Number($('#oProvider').value),
+        canton: $('#oCanton').value, age: Number($('#oAge').value),
+        franchise: Number($('#oFranchise').value), unfalleinschluss: $('#oUnfall').checked,
+    };
+}
+async function acceptOffer(id) {
+    confirmDialog('Accept offer', 'This will issue a policy from the offer.', async () => {
+        try { const p = await api.put('/api/offers/' + id + '/accept'); toast('Policy ' + p.policyNumber + ' issued'); loadOffers('ALL'); }
+        catch (ex) { toast(ex.message, 'error'); }
+    });
+}
+async function rejectOffer(id) {
+    try { await api.put('/api/offers/' + id + '/reject'); toast('Offer rejected'); loadOffers('ALL'); }
+    catch (ex) { toast(ex.message, 'error'); }
+}
+
+/* ===== Policies ===== */
+views.policies = async () => {
+    $('#pageSubtitle').textContent = 'Active contracts';
+    container().innerHTML = `
+        <div class="flex items-center justify-end mb-5">
+            <div class="flex gap-1 bg-gray-900 border border-gray-800 rounded-lg p-1">
+                ${['ALL','ACTIVE','CANCELLED','EXPIRED'].map((f,i) => `<button data-filter="${f}" class="pol-filter px-3 py-1.5 rounded-md text-sm transition ${i===0?'bg-red-600 text-white':'text-gray-400 hover:text-white'}">${f.charAt(0)+f.slice(1).toLowerCase()}</button>`).join('')}
+            </div>
+        </div>
+        <div id="polTable" class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">${spinner()}</div>`;
+    container().querySelectorAll('.pol-filter').forEach(b => b.addEventListener('click', () => {
+        container().querySelectorAll('.pol-filter').forEach(x => { x.classList.remove('bg-red-600','text-white'); x.classList.add('text-gray-400'); });
+        b.classList.add('bg-red-600','text-white'); b.classList.remove('text-gray-400');
+        loadPolicies(b.dataset.filter);
+    }));
+    loadPolicies('ALL');
+};
+async function loadPolicies(filter) {
+    const el = $('#polTable');
+    try {
+        const list = await api.get('/api/policies' + (filter && filter !== 'ALL' ? '?status=' + filter : ''));
+        if (!list.length) { el.innerHTML = emptyState('ti-shield-off', 'No policies found'); return; }
+        el.innerHTML = `<table class="w-full text-sm">
+            <thead><tr class="text-left text-gray-500 border-b border-gray-800 text-xs uppercase">
+                <th class="px-5 py-3">Policy No.</th><th class="px-5 py-3">Customer</th><th class="px-5 py-3">Provider</th>
+                <th class="px-5 py-3">Monthly</th><th class="px-5 py-3">Status</th><th class="px-5 py-3">Start</th><th class="px-5 py-3 text-right">Actions</th></tr></thead>
+            <tbody>${list.map(p => `
+                <tr class="border-b border-gray-800/60 hover:bg-gray-800/40 transition">
+                    <td class="px-5 py-3 font-mono text-xs">${esc(p.policyNumber)}</td>
+                    <td class="px-5 py-3 font-medium">${esc(p.customerName)}</td>
+                    <td class="px-5 py-3 text-gray-400">${esc(p.providerName)}</td>
+                    <td class="px-5 py-3 font-medium">${chf(p.monthlyPremium)}</td>
+                    <td class="px-5 py-3">${statusBadge(p.status)}</td>
+                    <td class="px-5 py-3 text-gray-500 text-xs">${fmtDate(p.startDate)}</td>
+                    <td class="px-5 py-3"><div class="flex items-center justify-end gap-1">
+                        <button title="Download PDF" onclick="downloadPdf('policy', ${p.id})" class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded"><i class="ti ti-download"></i></button>
+                        ${p.status === 'ACTIVE' ? `<button title="Cancel" onclick="cancelPolicy(${p.id})" class="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded"><i class="ti ti-ban"></i></button>` : ''}
+                    </div></td>
+                </tr>`).join('')}</tbody></table>`;
+    } catch (ex) { el.innerHTML = emptyState('ti-alert-triangle', ex.message); }
+}
+function cancelPolicy(id) {
+    openModal(`
+        <div class="p-6 border-b border-gray-800 flex items-center justify-between">
+            <h2 class="font-semibold">Cancel Policy</h2><button onclick="closeModal()" class="text-gray-500 hover:text-white"><i class="ti ti-x"></i></button></div>
+        <form id="cancelForm" class="p-6 space-y-4">
+            <p class="text-sm text-gray-400">Provide a reason for cancelling this policy.</p>
+            ${inputField('Reason', 'cancelReason', { required: true, placeholder: 'e.g. Customer request' })}
+            <div class="flex justify-end gap-3"><button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-gray-400 hover:text-white">Back</button>
+            <button type="submit" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium">Cancel Policy</button></div>
+        </form>`);
+    $('#cancelForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try { await api.put('/api/policies/' + id + '/cancel', { reason: $('#cancelReason').value.trim() });
+            closeModal(); toast('Policy cancelled'); loadPolicies('ALL'); }
+        catch (ex) { toast(ex.message, 'error'); }
+    });
+}
+
+/* ===== Appointments ===== */
+views.appointments = async () => {
+    $('#pageSubtitle').textContent = 'Schedule and meetings';
+    container().innerHTML = `
+        <div class="flex items-center justify-end mb-5">
+            <button id="addApptBtn" class="bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg px-4 py-2.5 text-sm flex items-center gap-2 transition">
+                <i class="ti ti-plus"></i> New Appointment</button>
+        </div>
+        <div id="apptUpcoming" class="mb-6">${spinner()}</div>
+        <div id="apptTable" class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden"></div>`;
+    $('#addApptBtn').addEventListener('click', appointmentForm);
+    loadAppointments();
+};
+async function loadAppointments() {
+    try {
+        const [all, upcoming] = await Promise.all([api.get('/api/appointments'), api.get('/api/appointments?upcoming=true')]);
+        $('#apptUpcoming').innerHTML = `<h2 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wide">This week</h2>
+            ${upcoming.length ? `<div class="grid grid-cols-1 md:grid-cols-3 gap-4">${upcoming.map(a => `
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 border-l-4 border-l-red-600">
+                    <p class="font-medium text-sm">${esc(a.title)}</p>
+                    <p class="text-xs text-gray-500 mt-1">${esc(a.customerName)}</p>
+                    <p class="text-xs text-gray-600 mt-2 flex items-center gap-1"><i class="ti ti-clock"></i> ${fmtDateTime(a.appointmentDate)}</p>
+                </div>`).join('')}</div>` : emptyState('ti-calendar-off', 'No appointments this week')}`;
+        const el = $('#apptTable');
+        if (!all.length) { el.innerHTML = emptyState('ti-calendar-off', 'No appointments'); return; }
+        el.innerHTML = `<table class="w-full text-sm">
+            <thead><tr class="text-left text-gray-500 border-b border-gray-800 text-xs uppercase">
+                <th class="px-5 py-3">Title</th><th class="px-5 py-3">Customer</th><th class="px-5 py-3">Date & Time</th>
+                <th class="px-5 py-3">Status</th><th class="px-5 py-3 text-right">Actions</th></tr></thead>
+            <tbody>${all.map(a => `
+                <tr class="border-b border-gray-800/60 hover:bg-gray-800/40 transition">
+                    <td class="px-5 py-3 font-medium">${esc(a.title)}</td>
+                    <td class="px-5 py-3 text-gray-400">${esc(a.customerName)}</td>
+                    <td class="px-5 py-3 text-gray-400">${fmtDateTime(a.appointmentDate)}</td>
+                    <td class="px-5 py-3">${statusBadge(a.status)}</td>
+                    <td class="px-5 py-3"><div class="flex items-center justify-end gap-1">
+                        <button title="Edit" onclick="appointmentForm(${a.id})" class="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded"><i class="ti ti-pencil"></i></button>
+                        <button title="Delete" onclick="deleteAppointment(${a.id})" class="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded"><i class="ti ti-trash"></i></button>
+                    </div></td>
+                </tr>`).join('')}</tbody></table>`;
+        app._appts = all;
+    } catch (ex) { $('#apptTable').innerHTML = emptyState('ti-alert-triangle', ex.message); }
+}
+async function appointmentForm(id) {
+    const a = id && app._appts ? app._appts.find(x => x.id === id) : null;
+    let customers = app.customers;
+    if (!customers || !customers.length) customers = await api.get('/api/customers');
+    const dtVal = a ? a.appointmentDate.slice(0,16) : '';
+    openModal(`
+        <div class="p-6 border-b border-gray-800 flex items-center justify-between">
+            <h2 class="font-semibold">${id ? 'Edit' : 'New'} Appointment</h2>
+            <button onclick="closeModal()" class="text-gray-500 hover:text-white"><i class="ti ti-x"></i></button></div>
+        <form id="apptForm" class="p-6 space-y-4">
+            ${selectField('Customer', 'aCustomer', customers.map(c => ({ value: c.id, label: c.firstName + ' ' + c.lastName })), { value: a ? a.customerId : '', required: true })}
+            ${inputField('Title', 'aTitle', { value: a ? a.title : '', required: true })}
+            ${inputField('Date & time', 'aDate', { type: 'datetime-local', value: dtVal, required: true })}
+            ${id ? selectField('Status', 'aStatus', ['SCHEDULED','COMPLETED','CANCELLED','NO_SHOW'], { value: a.status }) : ''}
+            ${inputField('Description', 'aDesc', { value: a ? (a.description || '') : '' })}
+            <div class="flex justify-end gap-3"><button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-gray-400 hover:text-white">Cancel</button>
+            <button type="submit" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium">${id ? 'Save' : 'Create'}</button></div>
+        </form>`);
+    $('#apptForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = { title: $('#aTitle').value.trim(), description: $('#aDesc').value.trim() || null,
+            appointmentDate: $('#aDate').value };
+        try {
+            if (id) { body.status = $('#aStatus').value; await api.put('/api/appointments/' + id, body); }
+            else { body.customerId = Number($('#aCustomer').value); await api.post('/api/appointments', body); }
+            closeModal(); toast('Appointment ' + (id ? 'updated' : 'created')); loadAppointments();
+        } catch (ex) { toast(ex.message, 'error'); }
+    });
+}
+function deleteAppointment(id) {
+    confirmDialog('Delete appointment', 'This cannot be undone.', async () => {
+        try { await api.delete('/api/appointments/' + id); toast('Appointment deleted'); loadAppointments(); }
+        catch (ex) { toast(ex.message, 'error'); }
+    });
+}
+
+/* ===== Premium Calculator ===== */
+views.calculator = async () => {
+    $('#pageSubtitle').textContent = 'Compare deductible options';
+    if (!app.providers.length) { try { app.providers = await api.get('/api/providers'); } catch (e) {} }
+    container().innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 h-fit">
+                <h2 class="font-semibold mb-4">Parameters</h2>
+                <div class="space-y-4">
+                    ${selectField('Provider', 'calcProvider', app.providers.map(p => ({ value: p.id, label: p.name })), { required: true })}
+                    ${selectField('Canton', 'calcCanton', CANTONS, { required: true })}
+                    ${inputField('Age', 'calcAge', { type: 'number', value: '30', required: true })}
+                    <label class="flex items-center gap-2 text-sm text-gray-300">
+                        <input type="checkbox" id="calcUnfall" class="rounded bg-gray-800 border-gray-700 text-red-600 focus:ring-red-600"> Include accident cover (+8%)
+                    </label>
+                    <button id="calcBtn" class="w-full bg-red-600 hover:bg-red-700 px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2"><i class="ti ti-calculator"></i> Calculate & Compare</button>
+                </div>
+            </div>
+            <div class="lg:col-span-2"><div id="calcResults">${emptyState('ti-calculator', 'Enter parameters and calculate')}</div></div>
+        </div>`;
+    $('#calcBtn').addEventListener('click', runCompare);
+};
+async function runCompare() {
+    const out = $('#calcResults');
+    out.innerHTML = spinner();
+    try {
+        const results = await api.post('/api/premium/compare', {
+            providerId: Number($('#calcProvider').value), canton: $('#calcCanton').value,
+            age: Number($('#calcAge').value), unfalleinschluss: $('#calcUnfall').checked,
+        });
+        const best = results.reduce((m, r) => Number(r.monthlyPremium) < Number(m.monthlyPremium) ? r : m, results[0]);
+        out.innerHTML = `<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            <div class="p-5 border-b border-gray-800"><h2 class="font-semibold">${esc(results[0].providerName)}</h2>
+                <p class="text-xs text-gray-500">${results[0].ageGroup} · Canton ${results[0].canton} (factor ${results[0].regionalFactor})${results[0].unfalleinschluss ? ' · accident cover' : ''}</p></div>
+            <table class="w-full text-sm">
+                <thead><tr class="text-left text-gray-500 text-xs uppercase border-b border-gray-800">
+                    <th class="px-5 py-3">Franchise</th><th class="px-5 py-3">Discount</th><th class="px-5 py-3">Monthly</th><th class="px-5 py-3">Yearly</th><th class="px-5 py-3"></th></tr></thead>
+                <tbody>${results.map(r => `
+                    <tr class="border-b border-gray-800/60 ${r === best ? 'bg-green-900/10' : ''}">
+                        <td class="px-5 py-3 font-medium">CHF ${r.franchise}</td>
+                        <td class="px-5 py-3 text-gray-400">${Math.round((1 - r.franchiseFactor) * 100)}%</td>
+                        <td class="px-5 py-3 font-semibold">${chf(r.monthlyPremium)}</td>
+                        <td class="px-5 py-3 text-gray-400">${chf(r.yearlyPremium)}</td>
+                        <td class="px-5 py-3">${r === best ? '<span class="inline-flex items-center gap-1 text-xs text-green-400"><i class="ti ti-star-filled"></i> Best value</span>' : ''}</td>
+                    </tr>`).join('')}</tbody></table></div>`;
+    } catch (ex) { out.innerHTML = emptyState('ti-alert-triangle', ex.message); }
+}
+
+/* ===== Audit Log ===== */
+views.audit = async () => {
+    $('#pageSubtitle').textContent = 'System activity trail';
+    container().innerHTML = `<div id="auditTable" class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">${spinner()}</div>`;
+    try {
+        const list = await api.get('/api/audit');
+        const el = $('#auditTable');
+        if (!list.length) { el.innerHTML = emptyState('ti-list', 'No audit entries'); return; }
+        el.innerHTML = `<table class="w-full text-sm">
+            <thead><tr class="text-left text-gray-500 border-b border-gray-800 text-xs uppercase">
+                <th class="px-5 py-3">Timestamp</th><th class="px-5 py-3">Entity</th><th class="px-5 py-3">Action</th>
+                <th class="px-5 py-3">Description</th><th class="px-5 py-3">User</th></tr></thead>
+            <tbody>${list.map(a => `
+                <tr class="border-b border-gray-800/60 hover:bg-gray-800/40 transition">
+                    <td class="px-5 py-3 text-gray-500 text-xs whitespace-nowrap">${fmtDateTime(a.performedAt)}</td>
+                    <td class="px-5 py-3"><span class="text-xs bg-gray-800 rounded px-2 py-0.5">${esc(a.entityType)} #${a.entityId}</span></td>
+                    <td class="px-5 py-3"><span class="font-mono text-xs font-semibold ${actionColor(a.action)}">${esc(a.action)}</span></td>
+                    <td class="px-5 py-3 text-gray-300">${esc(a.description)}</td>
+                    <td class="px-5 py-3 text-gray-500">${esc(a.performedBy || 'system')}</td>
+                </tr>`).join('')}</tbody></table>`;
+    } catch (ex) { $('#auditTable').innerHTML = emptyState('ti-alert-triangle', ex.message); }
+};
+
+/* ---------------------------- Shared dialogs / PDF ---------------------------- */
+function confirmDialog(title, message, onConfirm) {
+    openModal(`
+        <div class="p-6">
+            <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-red-600/20 text-red-500 flex items-center justify-center shrink-0"><i class="ti ti-alert-triangle text-xl"></i></div>
+                <div><h2 class="font-semibold">${esc(title)}</h2><p class="text-sm text-gray-400 mt-1">${esc(message)}</p></div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="closeModal()" class="px-4 py-2 text-sm text-gray-400 hover:text-white">Cancel</button>
+                <button id="confirmBtn" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium">Confirm</button>
+            </div>
+        </div>`);
+    $('#confirmBtn').addEventListener('click', () => { closeModal(); onConfirm(); });
+}
+
+async function downloadPdf(kind, id) {
+    try {
+        const res = await fetch(`/api/${kind === 'offer' ? 'offers' : 'policies'}/${id}/pdf`, {
+            headers: { 'Authorization': 'Bearer ' + app.token },
+        });
+        if (!res.ok) throw new Error('Failed to generate PDF');
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${kind}-${id}.pdf`; a.click();
+        URL.revokeObjectURL(url);
+        toast('PDF downloaded');
+    } catch (ex) { toast(ex.message, 'error'); }
+}
+
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>

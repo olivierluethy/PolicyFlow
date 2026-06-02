@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: policyflowdb
+          POSTGRES_USER: policyflow
+          POSTGRES_PASSWORD: policyflow123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U policyflow -d policyflowdb"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # The @QuarkusTest / IT suites use Dev Services (Testcontainers), which spin up
+      # their own PostgreSQL. The service container above is available for any test
+      # configured to use a fixed datasource.
+      - name: Build, test and verify
+        run: mvn -B verify
+
+      - name: Build Docker image
+        run: docker build -t policyflow-api:ci .
+
+      - name: Publish test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
+          if-no-files-found: ignore

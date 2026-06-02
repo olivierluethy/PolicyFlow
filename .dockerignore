@@ -1,0 +1,10 @@
+# Multi-stage build copies pom.xml + src and builds inside the image.
+target/
+.git/
+.github/
+.idea/
+*.iml
+.vscode/
+.DS_Store
+README.md
+docker-compose.yml
