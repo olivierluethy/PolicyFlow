@@ -1,5 +1,10 @@
 # PolicyFlow — Swiss Insurance Broker Platform
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Java 21](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Quarkus](https://img.shields.io/badge/Quarkus-3.36-4695EB?logo=quarkus&logoColor=white)](https://quarkus.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+
 > A production-grade platform for Swiss health-insurance brokers: manage customers,
 > calculate KVG premiums, generate offers and policies, schedule appointments and keep
 > a complete audit trail — with a polished dark-mode UI and a clean Quarkus backend.
@@ -185,6 +190,11 @@ PostgreSQL container via Testcontainers — no manual setup needed (Docker requi
 
 ---
 
+## License
+
+Released under the [MIT License](LICENSE) © 2026 Olivier Lüthy. You're free to use, modify and distribute this
+software, including commercially, as long as the copyright notice and license are included.
+
 ## Author
 
-_Portfolio project — author placeholder._
+Built by **Olivier Lüthy** — [GitHub](https://github.com/olivierluethy).
